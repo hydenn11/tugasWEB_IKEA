@@ -10,105 +10,39 @@ $(document).ready(function () {
   // Kurs konversi simulasi USD ke IDR untuk tema IKEA Indonesia
   const USD_TO_IDR = 16000;
 
-  // Format angka ke format mata uang Rupiah
+  // 1. JAVASCRIPT: Format angka ke format mata uang Rupiah
   function formatRupiah(usd) {
     const idr = Math.round(usd * USD_TO_IDR);
     return "Rp " + idr.toLocaleString("id-ID");
   }
 
-  // Helper untuk membuat elemen rating bintang
+  // 2. JAVASCRIPT: Helper untuk membuat elemen rating bintang
   function renderStars(rating) {
     const fullStars = Math.round(rating);
     return "★".repeat(fullStars) + "☆".repeat(Math.max(0, 5 - fullStars));
   }
 
   // ==========================================================================
-  // 1. MANAJEMEN KERANJANG (JAVASCRIPT LOCALSTORAGE & JQUERY)
-  // ==========================================================================
-  function getCart() {
-    return JSON.parse(localStorage.getItem("ikea_cart")) || [];
-  }
-
-  function getCartCount() {
-    const cart = getCart();
-    return cart.reduce((total, item) => total + item.qty, 0);
-  }
-
-  function updateCartBadge() {
-    const count = getCartCount();
-    const $badge = $("#cart-badge");
-    if ($badge.length) {
-      $badge.text(count);
-      // Efek jQuery animasi bump
-      $badge.addClass("bump");
-      setTimeout(() => $badge.removeClass("bump"), 250);
-    }
-  }
-
-  // Tampilkan notifikasi pop-up (Toast) menggunakan animasi jQuery fadeIn/fadeOut
-  function showToast(message) {
-    let $toast = $("#toast-notification");
-    if (!$toast.length) {
-      $("body").append('<div id="toast-notification" class="toast-notification"></div>');
-      $toast = $("#toast-notification");
-    }
-    $toast.html(`<span>🛒</span> <span>${message}</span>`);
-    $toast.stop(true, true).fadeIn(300).delay(2500).fadeOut(400);
-  }
-
-  function addToCart(product, quantity = 1) {
-    const cart = getCart();
-    const existingIndex = cart.findIndex((item) => item.id === product.id);
-
-    if (existingIndex > -1) {
-      cart[existingIndex].qty += quantity;
-    } else {
-      cart.push({
-        id: product.id,
-        title: product.title,
-        price: product.price,
-        thumbnail: product.thumbnail,
-        qty: quantity,
-      });
-    }
-
-    localStorage.setItem("ikea_cart", JSON.stringify(cart));
-    updateCartBadge();
-    showToast(`<strong>${product.title}</strong> (${quantity} barang) berhasil ditambahkan ke keranjang!`);
-  }
-
-  // Inisialisasi badge keranjang saat awal buka halaman
-  updateCartBadge();
-
-  // ==========================================================================
-  // 2. HALAMAN UTAMA (INDEX.HTML): AJAX LOAD PRODUK & FILTER KATEGORI
+  // BAGIAN 1: HALAMAN UTAMA (INDEX.HTML) - AJAX LOAD PRODUK & FILTER
   // ==========================================================================
   const $productGrid = $("#product-grid");
 
   if ($productGrid.length) {
-    let currentCategory = "furniture"; // Default kategori IKEA
-    let currentSearch = "";
+    let currentCategory = "furniture"; // Default kategori perabot IKEA
 
-    // Fungsi utama AJAX untuk memuat produk secara dinamis tanpa refresh halaman
-    function fetchProducts(category, search = "") {
+    // FUNGSI UTAMA AJAX: Memuat produk secara dinamis tanpa refresh halaman
+    function fetchProducts(category) {
       // Tampilkan indikator Loading (animasi spinner)
       $productGrid.html(`
         <div class="loading-box">
           <div class="spinner"></div>
-          <p class="loading-text">Memuat produk pilihan via AJAX...</p>
+          <p class="loading-text">Memuat produk IKEA via AJAX...</p>
         </div>
       `);
 
-      let apiUrl = "";
-      if (search.trim() !== "") {
-        // Hit API pencarian DummyJSON
-        apiUrl = `https://dummyjson.com/products/search?q=${encodeURIComponent(search)}`;
-      } else if (category === "all") {
-        apiUrl = `https://dummyjson.com/products?limit=12`;
-      } else {
-        // Hit API kategori spesifik DummyJSON
-        apiUrl = `https://dummyjson.com/products/category/${category}`;
-      }
+      let apiUrl = category === "all"
+        ? "https://dummyjson.com/products?limit=12"
+        : `https://dummyjson.com/products/category/${category}`;
 
       // IMPLEMENTASI AJAX MENGGUNAKAN JQUERY
       $.ajax({
@@ -124,37 +58,31 @@ $(document).ready(function () {
           console.error("AJAX Error:", status, error);
           $productGrid.html(`
             <div class="empty-box">
-              <p style="color: #c00; font-weight: bold; margin-bottom: 10px;">Gagal memuat produk dari server API.</p>
-              <p style="font-size: 14px; color: #666; margin-bottom: 15px;">Pastikan koneksi internet aktif.</p>
-              <button id="btn-retry" class="btn-ikea" style="padding: 8px 18px; font-size: 14px;">Coba Lagi</button>
+              <p style="color: #c00; font-weight: bold;">Gagal memuat produk dari server API.</p>
+              <p style="font-size: 14px; color: #666; margin-top: 5px;">Pastikan koneksi internet aktif.</p>
             </div>
           `);
-
-          // Event jQuery untuk tombol Retry
-          $("#btn-retry").on("click", function () {
-            fetchProducts(currentCategory, currentSearch);
-          });
         },
       });
     }
 
-    // Render daftar produk ke DOM menggunakan jQuery
+    // JQUERY: Menampilkan data produk ke layar secara dinamis
     function renderProductList(products) {
       $productGrid.empty();
 
       if (products.length === 0) {
         $productGrid.html(`
           <div class="empty-box">
-            <p>Tidak ada produk yang cocok dengan pencarian atau kategori ini.</p>
+            <p>Tidak ada produk pada kategori ini.</p>
           </div>
         `);
         return;
       }
 
-      // Loop setiap produk dan buat elemen HTML
+      // Loop data produk dari JSON dan buat kartu HTML
       products.forEach(function (item) {
         const productCardHtml = `
-          <div class="product-card" data-id="${item.id}" style="display: none;">
+          <div class="product-card" style="display: none;">
             <img src="${item.thumbnail}" alt="${item.title}" loading="lazy">
             <div class="card-body">
               <div class="rating">${renderStars(item.rating)} (${item.rating})</div>
@@ -164,7 +92,7 @@ $(document).ready(function () {
             </div>
             <div class="card-actions">
               <a href="product.html?id=${item.id}" class="btn-detail">Lihat Detail</a>
-              <button class="btn-quick-add" title="Tambah Cepat" data-id="${item.id}" data-title="${item.title.replace(/"/g, '&quot;')}" data-price="${item.price}" data-thumb="${item.thumbnail}">
+              <button type="button" class="btn-quick-add disabled-btn" title="Fitur dinonaktifkan">
                 + Keranjang
               </button>
             </div>
@@ -174,41 +102,17 @@ $(document).ready(function () {
       });
 
       // Animasi jQuery: Tampilkan kartu produk secara halus (fadeIn)
-      $productGrid.find(".product-card").fadeIn(400);
+      $productGrid.find(".product-card").fadeIn(300);
     }
 
-    // Event Handler jQuery: Tab Filter Kategori (Ruang Tamu / Kamar Tidur / Dapur / Dekorasi)
+    // JQUERY: Event Klik Filter Kategori (Ganti produk tanpa refresh)
     $(".category-btn").on("click", function (e) {
       e.preventDefault();
       $(".category-btn").removeClass("active");
       $(this).addClass("active");
 
-      // Reset input search saat ganti kategori
-      $("#search-input").val("");
-      currentSearch = "";
-
       currentCategory = $(this).data("category");
       fetchProducts(currentCategory);
-    });
-
-    // Event Handler jQuery: Pencarian Produk (Live Search / Submit)
-    $("#search-form").on("submit", function (e) {
-      e.preventDefault();
-      const query = $("#search-input").val().trim();
-      currentSearch = query;
-      fetchProducts(currentCategory, query);
-    });
-
-    // Event Handler jQuery: Delegasi klik untuk tombol "+ Keranjang" di kartu produk
-    $productGrid.on("click", ".btn-quick-add", function () {
-      const $btn = $(this);
-      const product = {
-        id: $btn.data("id"),
-        title: $btn.data("title"),
-        price: parseFloat($btn.data("price")),
-        thumbnail: $btn.data("thumb"),
-      };
-      addToCart(product, 1);
     });
 
     // Panggil AJAX pertama kali saat index.html dibuka
@@ -216,18 +120,18 @@ $(document).ready(function () {
   }
 
   // ==========================================================================
-  // 3. HALAMAN DETAIL PRODUK (PRODUCT.HTML): AJAX LOAD DETAIL BY ID
+  // BAGIAN 2: HALAMAN DETAIL (PRODUCT.HTML) - AJAX LOAD DETAIL BY ID
   // ==========================================================================
   const $detailContainer = $("#product-detail-container");
 
   if ($detailContainer.length) {
-    // Ambil parameter ID dari URL (misal: product.html?id=12)
+    // JAVASCRIPT: Ambil ID produk dari parameter URL (contoh: product.html?id=12)
     const urlParams = new URLSearchParams(window.location.search);
-    const productId = urlParams.get("id") || "11"; // Default ke id 11 (produk furniture) jika dibuka langsung
+    const productId = urlParams.get("id") || "11"; // Default ke ID 11 (perabot) jika dibuka langsung
 
-    let currentProductData = null;
     let selectedQuantity = 1;
 
+    // FUNGSI AJAX: Mengambil rincian produk berdasarkan ID
     function fetchProductDetail(id) {
       $detailContainer.html(`
         <div class="loading-box" style="grid-column: 1 / -1;">
@@ -236,38 +140,37 @@ $(document).ready(function () {
         </div>
       `);
 
-      // AJAX Request ke DummyJSON Product Detail
+      // Request AJAX ke DummyJSON
       $.ajax({
         url: `https://dummyjson.com/products/${id}`,
         method: "GET",
         dataType: "json",
         timeout: 10000,
         success: function (product) {
-          currentProductData = product;
           renderProductDetail(product);
         },
         error: function (xhr, status, error) {
           console.error("AJAX Error:", status, error);
           $detailContainer.html(`
             <div class="empty-box" style="grid-column: 1 / -1;">
-              <h2 style="color: #c00; margin-bottom: 10px;">Produk Tidak Ditemukan</h2>
-              <p style="margin-bottom: 20px;">Gagal memuat detail produk dari server API.</p>
-              <a href="index.html" class="btn-ikea">Kembali ke Beranda</a>
+              <h2 style="color: #c00;">Produk Tidak Ditemukan</h2>
+              <p>Gagal memuat detail produk dari server API.</p>
+              <a href="index.html" class="btn-ikea" style="margin-top: 15px; display: inline-block;">Kembali ke Beranda</a>
             </div>
           `);
         },
       });
     }
 
+    // JQUERY: Menampilkan detail produk ke layar
     function renderProductDetail(product) {
-      // Perbarui judul halaman di browser
       document.title = `IKEA - ${product.title}`;
 
       // Perbarui breadcrumb
       $("#breadcrumb-category").text(product.category.toUpperCase());
       $("#breadcrumb-title").text(product.title);
 
-      // Siapkan galeri thumbnail jika ada beberapa gambar
+      // Buat daftar thumbnail gambar
       let thumbnailsHtml = "";
       const images = product.images && product.images.length ? product.images : [product.thumbnail];
       images.forEach((imgUrl, index) => {
@@ -276,7 +179,7 @@ $(document).ready(function () {
         `;
       });
 
-      // Render Ulasan (Reviews) jika disediakan oleh API
+      // Render Ulasan Pelanggan dari API
       let reviewsHtml = "";
       if (product.reviews && product.reviews.length > 0) {
         product.reviews.forEach((rev) => {
@@ -294,10 +197,10 @@ $(document).ready(function () {
         reviewsHtml = "<p>Belum ada ulasan untuk produk ini.</p>";
       }
 
-      // Bangun struktur detail produk
+      // Template HTML Detail Produk
       const detailHtml = `
         <div class="product-detail">
-          <!-- Kolom Galeri Foto -->
+          <!-- Kolom Foto & Galeri -->
           <div class="product-detail-img">
             <img id="main-product-img" src="${product.thumbnail || images[0]}" alt="${product.title}">
             <div class="thumbnail-gallery">
@@ -308,7 +211,7 @@ $(document).ready(function () {
           <!-- Kolom Informasi Produk -->
           <div class="product-detail-info">
             <h1>${product.title}</h1>
-            <p class="category-tag">Kategori: <strong>${product.category}</strong> | Merek: <strong>${product.brand || "IKEA Original"}</strong></p>
+            <p class="category-tag">Kategori: <strong>${product.category}</strong> | Merek: <strong>${product.brand || "IKEA"}</strong></p>
             
             <div class="rating" style="margin-bottom: 15px; font-size: 15px;">
               ${renderStars(product.rating)} <strong>${product.rating}</strong> / 5
@@ -318,15 +221,15 @@ $(document).ready(function () {
 
             <p class="description">${product.description}</p>
 
-            <!-- Informasi Spesifikasi Produk dari API DummyJSON -->
+            <!-- Rincian Data Asli dari Server API DummyJSON -->
             <ul class="spec-list">
               <li><strong>Stok Tersedia:</strong> ${product.stock} unit</li>
-              <li><strong>Status Garansi:</strong> ${product.warrantyInformation || "Garansi Resmi IKEA 1 Tahun"}</li>
+              <li><strong>Status Garansi:</strong> ${product.warrantyInformation || "Garansi Resmi 1 Tahun"}</li>
               <li><strong>Kebijakan Pengembalian:</strong> ${product.returnPolicy || "30 Hari Pengembalian"}</li>
-              <li><strong>Informasi Pengiriman:</strong> ${product.shippingInformation || "Gratis Ongkir ke Seluruh Indonesia"}</li>
+              <li><strong>Informasi Pengiriman:</strong> ${product.shippingInformation || "Pengiriman Cepat"}</li>
             </ul>
 
-            <!-- Kontrol Kuantitas Barang -->
+            <!-- Kontrol Jumlah (Visual) -->
             <div class="qty-wrapper">
               <label style="font-weight: bold;">Jumlah:</label>
               <button type="button" id="btn-qty-minus" class="qty-btn">-</button>
@@ -336,7 +239,7 @@ $(document).ready(function () {
 
             <!-- Tombol Aksi -->
             <div>
-              <button id="btn-add-detail-cart" class="btn-cart">+ Tambah ke Keranjang</button>
+              <button type="button" class="btn-cart disabled-btn" title="Fitur dinonaktifkan">+ Tambah ke Keranjang</button>
               <a href="index.html" class="btn-back">Kembali ke Katalog</a>
             </div>
           </div>
@@ -353,19 +256,18 @@ $(document).ready(function () {
 
       $detailContainer.html(detailHtml);
 
-      // Event jQuery: Interaktivitas Galeri Foto Thumbnail
+      // JQUERY: Klik thumbnail untuk ganti foto utama
       $(".thumbnail-item").on("click", function () {
         const newSrc = $(this).data("full");
         $(".thumbnail-item").removeClass("active");
         $(this).addClass("active");
 
-        // Efek animasi jQuery perpindahan gambar
         $("#main-product-img").fadeOut(150, function () {
           $(this).attr("src", newSrc).fadeIn(200);
         });
       });
 
-      // Event jQuery: Penyesuaian Kuantitas (+ / -)
+      // JQUERY: Penyesuaian Kuantitas (+ / -) secara visual
       $("#btn-qty-minus").on("click", function () {
         if (selectedQuantity > 1) {
           selectedQuantity--;
@@ -377,15 +279,6 @@ $(document).ready(function () {
         if (selectedQuantity < product.stock) {
           selectedQuantity++;
           $("#qty-display").text(selectedQuantity);
-        } else {
-          showToast(`Maksimal stok tersedia hanya ${product.stock} unit.`);
-        }
-      });
-
-      // Event jQuery: Tombol Tambah ke Keranjang dari Halaman Detail
-      $("#btn-add-detail-cart").on("click", function () {
-        if (currentProductData) {
-          addToCart(currentProductData, selectedQuantity);
         }
       });
     }
@@ -393,4 +286,18 @@ $(document).ready(function () {
     // Jalankan AJAX detail produk saat halaman product.html dibuka
     fetchProductDetail(productId);
   }
+
+  // ==========================================================================
+  // FITUR SEARCH & KERANJANG DINONAKTIFKAN (HANYA TAMPILAN)
+  // ==========================================================================
+  // Cegah submit pada form pencarian agar tidak reload halaman
+  $("#search-form").on("submit", function (e) {
+    e.preventDefault();
+  });
+
+  // Notifikasi sederhana jika tombol keranjang diklik
+  $(document).on("click", ".disabled-btn, .cart-nav-item a", function (e) {
+    e.preventDefault();
+    alert("Catatan: Fitur keranjang dinonaktifkan (hanya tampilan UI sesuai kebutuhan tugas).");
+  });
 });
