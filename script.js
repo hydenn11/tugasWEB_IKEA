@@ -295,9 +295,8 @@ $(document).ready(function () {
     e.preventDefault();
   });
 
-  // Notifikasi sederhana jika tombol keranjang diklik
+  // Fitur keranjang dinonaktifkan (hanya tampilan UI, klik tidak memicu apa pun)
   $(document).on("click", ".disabled-btn, .cart-nav-item a", function (e) {
     e.preventDefault();
-    alert("Catatan: Fitur keranjang dinonaktifkan (hanya tampilan UI sesuai kebutuhan tugas).");
   });
 });
