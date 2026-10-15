@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IKEA - Halaman Utama (Katalog Dinamis)</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <!-- Header & Navigasi -->
+  <header>
+    <div class="container navbar">
+      <a href="index.html" class="logo">IKEA</a>
+      <ul class="nav-links">
+        <li><a href="index.html" class="active">Beranda</a></li>
+        <li><a href="product.html">Detail Produk</a></li>
+        <li><a href="#kontak">Kontak</a></li>
+        <li class="cart-nav-item">
+          <a href="javascript:void(0)" title="Keranjang Belanja">
+            🛒 Keranjang <span id="cart-badge" class="cart-badge">0</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </header>
+
+  <!-- Banner Utama (Hero) -->
+  <section class="hero">
+    <div class="container">
+      <h1>Selamat Datang di IKEA</h1>
+      <p>Inspirasi perabot rumah tangga sederhana, fungsional, dan terjangkau.</p>
+
+      <!-- Fitur Pencarian Dinamis via AJAX -->
+      <form id="search-form" class="search-wrapper">
+        <input type="text" id="search-input" class="search-input"
+          placeholder="Cari perabot rumah tangga (misal: sofa, bed, chair, lamp)..." autocomplete="off">
+        <button type="submit" class="search-btn">Cari Produk</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- Konten Utama -->
+  <main class="container">
+
+    <!-- Bagian Filter Kategori Dinamis via AJAX -->
+    <h2 class="section-title">Kategori Ruangan</h2>
+    <div class="categories" id="category-filter-container">
+      <button type="button" class="category-btn active" data-category="furniture"> Ruang Tamu & Kamar
+        (Furniture)</button>
+      <button type="button" class="category-btn" data-category="home-decoration"> Dekorasi Rumah</button>
+      <button type="button" class="category-btn" data-category="kitchen-accessories"> Perlengkapan Dapur</button>
+      <button type="button" class="category-btn" data-category="all"> Semua Koleksi</button>
+    </div>
+
+    <!-- Bagian Produk Populer yang Dimuat Dinamis via AJAX -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+      <h2 class="section-title" style="margin-bottom: 0;">Produk Pilihan (AJAX Live Data)</h2>
+    </div>
+
+    <!-- Grid Produk Dinamis -->
+    <div id="product-grid" class="product-grid">
+      <!-- Konten kartu produk akan diisi secara dinamis melalui script.js via AJAX -->
+      <div class="loading-box">
+        <div class="spinner"></div>
+        <p class="loading-text">Memuat produk IKEA...</p>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Toast Notification untuk Keranjang -->
+  <div id="toast-notification" class="toast-notification"></div>
+
+  <!-- Library jQuery via CDN -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <!-- Script Utama (Implementasi JavaScript, jQuery & AJAX) -->
+  <script src="script.js"></script>
+</body>
+
+</html>
